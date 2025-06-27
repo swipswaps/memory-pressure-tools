@@ -1,0 +1,7 @@
+[Unit]
+Description=Check and restart Plasma Shell if memory usage is high
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'PLASMA_MEM=$(ps -eo rss,comm | grep plasmashell | awk "{sum+=\$1} END {print sum+0}"); if [ "\$PLASMA_MEM" -gt 1500000 ]; then killall plasmashell && sleep 2 && kstart plasmashell; fi'
+Environment=DISPLAY=:0

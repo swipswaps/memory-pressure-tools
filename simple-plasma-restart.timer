@@ -1,0 +1,10 @@
+[Unit]
+Description=Restart Plasma Shell periodically to prevent memory leaks
+Requires=simple-plasma-restart.service
+
+[Timer]
+OnCalendar=*:0/30  # Every 30 minutes
+Persistent=true
+
+[Install]
+WantedBy=timers.target

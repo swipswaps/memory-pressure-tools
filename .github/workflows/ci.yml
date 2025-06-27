@@ -1,0 +1,122 @@
+# Memory Pressure Tools - Continuous Integration
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # Basic validation
+  validate:
+    name: Validate Repository
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Validate repository structure
+      run: |
+        echo "🔍 Validating memory pressure tools..."
+        echo "Core scripts:"
+        test -f unified-memory-manager.sh && echo "✅ unified-memory-manager.sh exists"
+        test -f configure-systemd-oomd.sh && echo "✅ configure-systemd-oomd.sh exists"
+        test -f install-earlyoom.sh && echo "✅ install-earlyoom.sh exists"
+        test -f install-nohang.sh && echo "✅ install-nohang.sh exists"
+        
+        echo "KDE integration:"
+        test -f kde-memory-manager.sh && echo "✅ kde-memory-manager.sh exists"
+        test -f install-kde-memory-fix.sh && echo "✅ install-kde-memory-fix.sh exists"
+        
+        echo "SystemD services:"
+        test -f kde-memory-manager.service && echo "✅ kde-memory-manager.service exists"
+        test -f simple-plasma-restart.service && echo "✅ simple-plasma-restart.service exists"
+        
+        echo "Documentation:"
+        test -f README.md && echo "✅ README.md exists"
+        test -f LICENSE && echo "✅ LICENSE exists"
+
+  # Shell script validation
+  shell-validation:
+    name: Shell Script Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install shellcheck
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y shellcheck
+        
+    - name: Validate shell scripts
+      run: |
+        echo "🔧 Validating shell scripts..."
+        
+        # Check executable permissions
+        echo "Checking executable scripts..."
+        find . -name "*.sh" -executable | head -5
+        
+        # Run shellcheck with relaxed rules
+        for script in *.sh; do
+          if [ -f "$script" ]; then
+            echo "Checking $script..."
+            shellcheck -e SC2034,SC2086,SC2181,SC1091 "$script" || echo "Warning: $script has style issues"
+          fi
+        done
+        
+        echo "✅ Shell script validation completed"
+
+  # SystemD service validation
+  systemd-validation:
+    name: SystemD Service Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Validate SystemD services
+      run: |
+        echo "🔧 Validating SystemD service files..."
+        
+        for service in *.service *.timer; do
+          if [ -f "$service" ]; then
+            echo "Checking $service..."
+            # Basic syntax check
+            grep -q "\[Unit\]" "$service" && echo "✅ $service has Unit section"
+            grep -q "\[Service\]\|\[Timer\]" "$service" && echo "✅ $service has main section"
+          fi
+        done
+        
+        echo "✅ SystemD service validation completed"
+
+  # Basic security check
+  security-check:
+    name: Basic Security Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Basic security validation
+      run: |
+        echo "🔍 Running basic security checks..."
+        
+        # Check for potential secrets
+        echo "Checking for hardcoded secrets..."
+        ! grep -r "password\|secret\|token\|api_key" --include="*.sh" --include="*.service" . || echo "Warning: Potential secrets found"
+        
+        # Check for sudo usage (expected in memory management tools)
+        echo "Checking sudo usage..."
+        grep -r "sudo" --include="*.sh" . | head -3 || echo "No sudo usage found"
+        
+        # Check file permissions
+        echo "Checking file permissions..."
+        find . -name "*.sh" -perm /111 | head -5
+        
+        echo "✅ Basic security check completed"

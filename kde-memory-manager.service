@@ -1,0 +1,24 @@
+[Unit]
+Description=KDE Memory Manager - Automatic KDE Plasma memory leak prevention
+After=graphical-session.target
+Wants=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/kde-memory-manager.sh
+Restart=always
+RestartSec=30
+Environment=DISPLAY=:0
+Environment=XDG_RUNTIME_DIR=%t
+
+# Resource limits to prevent the monitor itself from using too much memory
+MemoryMax=50M
+CPUQuota=5%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kde-memory-manager
+
+[Install]
+WantedBy=default.target
